@@ -5,7 +5,7 @@ import Base.Cartesian, Base.Cartesian.@nloops, Base.Cartesian.@nref
 
 export groupslices, groupinds, firstinds, lastinds
 
-immutable Prehashed
+struct Prehashed
     hash::UInt
 end
 hash(x::Prehashed) = x.hash
@@ -30,7 +30,7 @@ elseif dim == 3
 end
 ```
 """
-@generated function groupslices{T,N}(A::AbstractArray{T,N}, dim::Int)
+@generated function groupslices(A::AbstractArray{T,N}, dim::Int) where {T,N}
     quote
         if !(1 <= dim <= $N)
             ArgumentError("Input argument dim must be 1 <= dim <= $N, but is currently $dim")
@@ -44,7 +44,7 @@ end
         end
 
         # Collect index of first row for each hash
-        uniquerow = Array(Int, size(A, dim))
+        uniquerow = Array{Int}(undef,size(A, dim))
         firstrow = Dict{Prehashed,Int}()
         for k = 1:size(A, dim)
             uniquerow[k] = get!(firstrow, Prehashed(hashes[k]), k)
@@ -128,7 +128,7 @@ function groupinds(ic::Vector{Int})
         d[ia[i]]= i
     end
 
-    ib = Array(Vector{Int},n)
+    ib = Vector{Vector{Int}}(undef,n)
     for k = 1:n
         ib[k] = Int[]
     end
@@ -160,9 +160,9 @@ operates on the output returned from `groupinds(ic::Vector{Int})`.
 function firstinds(ic::Vector{Int})
     id = unique(ic)
     n = length(id)
-    ia = Array(Int,n)
+    ia = Vector{Int}(undef,n)
     for i = 1:n
-        ia[i] = findfirst(ic, id[i])
+        ia[i] = findfirst(elt -> elt==id[i],ic)
     end
     return ia
 end
